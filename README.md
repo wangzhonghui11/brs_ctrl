@@ -15,7 +15,7 @@
 <img src="media/SUSig-red.png" width=200>
 
 [[Website]](https://behavior-robot-suite.github.io/)
-[[arXiv]]()
+[[arXiv]](https://arxiv.org/abs/2503.05652)
 [[PDF]](https://behavior-robot-suite.github.io/assets/pdf/brs_paper.pdf)
 [[Doc]](https://behavior-robot-suite.github.io/docs/)
 [[Algorithm Code]](https://github.com/behavior-robot-suite/brs-algo)
@@ -89,13 +89,14 @@ python3 scripts/data_collection/start_data_collection.py
 ```
 
 ## Check out Our Paper
-Our paper is posted on [arXiv](). If you find our work useful, please consider citing us! 
+Our paper is posted on [arXiv](https://arxiv.org/abs/2503.05652). If you find our work useful, please consider citing us! 
 
 ```bibtex
 @article{jiang2025brs,
-  title = {BEHAVIOR Robot Suite: Streamlining Real-World Whole-Body Manipulation for Everyday Household Activities},
-  author = {Yunfan Jiang and Ruohan Zhang and Josiah Wong and Chen Wang and Yanjie Ze and Hang Yin and Cem Gokmen and Shuran Song and Jiajun Wu and Li Fei-Fei},
-  year = {2025}
+title = {BEHAVIOR Robot Suite: Streamlining Real-World Whole-Body Manipulation for Everyday Household Activities},
+author = {Yunfan Jiang and Ruohan Zhang and Josiah Wong and Chen Wang and Yanjie Ze and Hang Yin and Cem Gokmen and Shuran Song and Jiajun Wu and Li Fei-Fei},
+year = {2025},
+journal = {arXiv preprint arXiv: 2503.05652}
 }
 ```
 
