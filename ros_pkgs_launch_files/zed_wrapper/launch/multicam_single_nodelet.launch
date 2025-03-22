@@ -1,0 +1,148 @@
+<?xml version="1.0"?>
+<!--
+Copyright (c) 2023, STEREOLABS.
+
+All rights reserved.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<launch>
+    <!-- System name -->
+    <arg name="system_name"  default="zed_multi_cams" />
+
+    <!-- Name of the Nodelet Manager -->
+    <arg name="nodelet_manager_name"    default="$(arg system_name)_nodelet_manager" />
+
+    <!-- HEAD CAMERA -->
+    <arg name="camera_name_1"           default="zed2_head" />
+    <arg name="camera_model_1"          default="zed2" /> <!-- 'zed' or 'zedm' or 'zed2' -->    
+    <arg name="zed_nodelet_name_1"      default="zed_nodelet_head" />
+    <arg name="point_cloud_freq_1"           default="60" />
+    <arg name="pub_frame_rate_1"           default="60" />
+    <arg name="grab_resolution_1"           default="VGA" />
+    <arg name="grab_frame_rate_1"           default="60" />
+    <arg name="depth_mode_1"           default="PERFORMANCE" />
+    <arg name="min_depth_1"           default="0.2" />
+    <arg name="max_depth_1"           default="3" />
+
+    <!-- Base frame -->
+    <arg name="base_frame_1"            default="base_link" />
+
+    <arg name="camera_sn_1"             default="20209960" />
+    <arg name="gpu_id_1"                default="-1" />
+
+    <!-- LEFT WRIST CAMERA -->
+    <arg name="camera_name_2"           default="zed2_left_wrist" />
+    <arg name="camera_model_2"          default="zedm" /> <!-- 'zed' or 'zedm' or 'zed2' -->
+    <arg name="zed_nodelet_name_2"      default="zed_nodelet_left_wrist" />
+    <arg name="point_cloud_freq_2"           default="60" />
+    <arg name="pub_frame_rate_2"           default="60" />
+    <arg name="grab_resolution_2"           default="VGA" />
+    <arg name="grab_frame_rate_2"           default="60" />
+    <arg name="depth_mode_2"           default="PERFORMANCE" />
+    <arg name="min_depth_2"           default="0.1" />
+    <arg name="max_depth_2"           default="1" />
+
+    <!-- Base frame -->
+    <arg name="base_frame_2"            default="base_link" />
+
+    <arg name="camera_sn_2"             default="19966609" />
+    <arg name="gpu_id_2"                default="-1" />
+
+    <!-- RIGHT WRIST CAMERA -->
+    <arg name="camera_name_3"           default="zed2_right_wrist" />
+    <arg name="camera_model_3"          default="zedm" /> <!-- 'zed' or 'zedm' or 'zed2' -->
+    <arg name="zed_nodelet_name_3"      default="zed_nodelet_right_wrist" />
+    <arg name="point_cloud_freq_3"           default="60" />
+    <arg name="pub_frame_rate_3"           default="60" />
+    <arg name="grab_resolution_3"           default="VGA" />
+    <arg name="grab_frame_rate_3"           default="60" />
+    <arg name="depth_mode_3"           default="PERFORMANCE" />
+    <arg name="min_depth_3"           default="0.1" />
+    <arg name="max_depth_3"           default="1" />
+
+    <!-- Base frame -->
+    <arg name="base_frame_3"            default="base_link" />
+
+    <arg name="camera_sn_3"             default="18204585" />
+    <arg name="gpu_id_3"                default="-1" />
+
+    <!-- Start nodelet manager and three nodelets in the "system_name" namespace-->
+    <group ns="$(arg system_name)">
+        <!-- Common nodelet Manager -->
+        <node pkg="nodelet" type="nodelet" name="$(arg nodelet_manager_name)"  args="manager" output="screen" />
+
+        <group ns="$(arg camera_name_1)">
+            <!-- Load ZED wrapper nodelet for camera 1 -->
+            <include file="$(find zed_wrapper)/launch/include/nodelet_mod.launch">
+                <arg name="nodelet_manager_name"            value="/$(arg system_name)/$(arg nodelet_manager_name)" />
+                <arg name="point_cloud_freq"           value="$(arg point_cloud_freq_1)" />
+                <arg name="pub_frame_rate"           value="$(arg pub_frame_rate_1)" />
+                <arg name="grab_resolution"           value="$(arg grab_resolution_1)" />
+                <arg name="grab_frame_rate"           value="$(arg grab_frame_rate_1)" />
+                <arg name="depth_mode"           value="$(arg depth_mode_1)" />
+                <arg name="min_depth"           value="$(arg min_depth_1)" />
+                <arg name="max_depth"           value="$(arg max_depth_1)" />
+                <arg name="camera_name"                     value="$(arg camera_name_1)" />
+                <arg name="node_name"                       value="$(arg zed_nodelet_name_1)" />
+                <arg name="camera_model"                    value="$(arg camera_model_1)" />
+                <arg name="zed_id"                          value="0" />
+                <arg name="base_frame"                      value="$(arg base_frame_1)" />
+                <arg name="camera_sn"                      value="$(arg camera_sn_1)" />
+                <arg name="gpu_id"                          value="$(arg gpu_id_1)" />
+            </include>
+        </group>
+
+        <group ns="$(arg camera_name_2)">
+            <!-- Load ZED wrapper nodelet for camera 2-->
+            <include file="$(find zed_wrapper)/launch/include/nodelet_mod.launch">
+                <arg name="nodelet_manager_name"            value="/$(arg system_name)/$(arg nodelet_manager_name)" />
+                <arg name="point_cloud_freq"           value="$(arg point_cloud_freq_2)" />
+                <arg name="pub_frame_rate"           value="$(arg pub_frame_rate_2)" />
+                <arg name="grab_resolution"           value="$(arg grab_resolution_2)" />
+                <arg name="grab_frame_rate"           value="$(arg grab_frame_rate_2)" />
+                <arg name="depth_mode"           value="$(arg depth_mode_2)" />
+                <arg name="min_depth"           value="$(arg min_depth_2)" />
+                <arg name="max_depth"           value="$(arg max_depth_2)" />
+                <arg name="camera_name"                     value="$(arg camera_name_2)" />
+                <arg name="node_name"                       value="$(arg zed_nodelet_name_2)" />
+                <arg name="camera_model"                    value="$(arg camera_model_2)" />
+                <arg name="zed_id"                          value="1" />
+                <arg name="base_frame"                      value="$(arg base_frame_2)" />
+                <arg name="camera_sn"                      value="$(arg camera_sn_2)" />
+                <arg name="gpu_id"                          value="$(arg gpu_id_2)" />
+            </include>
+        </group>        
+
+        <group ns="$(arg camera_name_3)">
+            <!-- Load ZED wrapper nodelet for camera 3-->
+            <include file="$(find zed_wrapper)/launch/include/nodelet_mod.launch">
+                <arg name="nodelet_manager_name"            value="/$(arg system_name)/$(arg nodelet_manager_name)" />
+                <arg name="point_cloud_freq"           value="$(arg point_cloud_freq_3)" />
+                <arg name="pub_frame_rate"           value="$(arg pub_frame_rate_3)" />
+                <arg name="grab_resolution"           value="$(arg grab_resolution_3)" />
+                <arg name="grab_frame_rate"           value="$(arg grab_frame_rate_3)" />
+                <arg name="depth_mode"           value="$(arg depth_mode_3)" />
+                <arg name="min_depth"           value="$(arg min_depth_3)" />
+                <arg name="max_depth"           value="$(arg max_depth_3)" />
+                <arg name="camera_name"                     value="$(arg camera_name_3)" />
+                <arg name="node_name"                       value="$(arg zed_nodelet_name_3)" />
+                <arg name="camera_model"                    value="$(arg camera_model_3)" />
+                <arg name="zed_id"                          value="2" />
+                <arg name="base_frame"                      value="$(arg base_frame_3)" />
+                <arg name="camera_sn"                      value="$(arg camera_sn_3)" />
+                <arg name="gpu_id"                          value="$(arg gpu_id_3)" />
+            </include>
+        </group>
+    </group>
+</launch>

@@ -1,0 +1,158 @@
+<?xml version="1.0"?>
+<!--
+Copyright (c) 2023, STEREOLABS.
+
+All rights reserved.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<launch>
+    <!-- General -->
+    <arg name="point_cloud_freq"           default="60" />
+    <arg name="pub_frame_rate"           default="60" />
+    <arg name="grab_resolution"           default="VGA" />  <!-- 'HD2K', 'HD1080', 'HD720', 'VGA', 'AUTO' -->
+    <arg name="grab_frame_rate"           default="60" />
+
+    <!-- Depth -->
+    <arg name="depth_mode"           default="ULTRA" />
+    <arg name="min_depth"           default="0.3" />
+    <arg name="max_depth"           default="15.0" />
+
+    <!-- Camera Model and Name -->
+    <arg name="camera_name"           default="zed" /> <!-- The name you want -->
+    <arg name="camera_model"          default="zed" /> <!-- 'zed' or 'zedm' or 'zed2' -->
+    <arg name="node_name"             default="zed_nodelet" />
+    <arg name="zed_id"                default="0" />
+
+    <!-- Base frame -->
+    <arg name="base_frame"            default="base_link" />
+
+    <arg name="camera_sn"             default="0" />
+    <arg name="gpu_id"                default="-1" />
+
+    <!-- NOTE: THE NODELET MANAGER MUST BE STARTED EXTERNALLY. SEE "zed_nodelet_example" -->
+
+    <!-- Name of the Nodelet Manager -->
+    <arg name="nodelet_manager_name"  default="zed_nodelet_manager" />
+
+    <!-- ROS URDF description of the ZED -->
+    <param name="$(arg camera_name)_description"
+           command="$(find xacro)/xacro '$(find zed_wrapper)/urdf/zed_descr.urdf.xacro'
+                    camera_name:=$(arg camera_name)
+                    camera_model:=$(arg camera_model)
+                    base_frame:=$(arg base_frame)
+                    cam_pos_x:=0.0
+                    cam_pos_y:=0.0
+                    cam_pos_z:=0.0
+                    cam_roll:=0.0
+                    cam_pitch:=0.0
+                    cam_yaw:=0.0"
+    />
+
+    <node name="$(arg camera_name)_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen" required="true">
+        <remap from="robot_description" to="$(arg camera_name)_description" />
+    </node>
+
+    <node pkg="nodelet" type="nodelet" name="$(arg node_name)" args="load zed_nodelets/ZEDWrapperNodelet $(arg nodelet_manager_name)" output="screen">
+        <rosparam file="$(find zed_wrapper)/params/common.yaml" command="load" />
+        <rosparam file="$(find zed_wrapper)/params/$(arg camera_model).yaml" command="load" />
+        <!-- Dynamic parameters cannot have a namespace -->
+        <param name="brightness"               value="4" />
+        <param name="contrast"               value="4" />
+        <param name="hue"               value="0" />
+        <param name="saturation"               value="4" />
+        <param name="sharpness"               value="4" />
+        <param name="gamma"               value="8" />
+        <param name="auto_exposure_gain"               value="true" />
+        <param name="gain"               value="100" />
+        <param name="exposure"               value="100" />
+        <param name="auto_whitebalance"               value="true" />
+        <param name="whitebalance_temperature"               value="42" />
+        <param name="depth_confidence"               value="50" />
+        <param name="depth_texture_conf"               value="100" />
+        <param name="point_cloud_freq"               value="$(arg point_cloud_freq)" />
+
+        <!-- General -->
+        <param name="general/camera_name"               value="$(arg camera_name)" />
+        <param name="general/zed_id"               value="$(arg zed_id)" />
+        <param name="general/serial_number"             value="$(arg camera_sn)" />
+        <param name="general/gpu_id"                    value="$(arg gpu_id)" />
+        <param name="general/base_frame"                value="$(arg base_frame)" />
+        <param name="general/sdk_verbose"                value="1" />
+        <param name="general/svo_compression"                value="2" />
+        <param name="general/self_calib"                value="true" />
+        <param name="general/camera_flip"                value="AUTO" />
+        <param name="general/pub_resolution"                value="CUSTOM" />
+        <param name="general/pub_downscale_factor"                value="4.0" />
+        <param name="general/pub_frame_rate"                value="$(arg pub_frame_rate)" />
+        <param name="general/svo_realtime"                value="true" />
+        <param name="general/region_of_interest"                value="[]" />
+        <param name="general/grab_resolution"                value="$(arg grab_resolution)" />
+        <param name="general/grab_frame_rate"                value="$(arg grab_frame_rate)" />
+
+        <!-- Depth -->
+        <param name="depth/depth_mode"               value="$(arg depth_mode)" />
+        <param name="depth/min_depth"               value="$(arg min_depth)" />
+        <param name="depth/max_depth"               value="$(arg max_depth)" />
+        <param name="depth/depth_stabilization"               value="1" />
+        <param name="depth/openni_depth_mode"               value="false" />
+
+        <!-- Pos Tracking -->
+        <param name="pos_tracking/pos_tracking_enabled"               value="false" />
+        <param name="pos_tracking/pos_tracking_mode"               value="GEN_2" />
+        <param name="pos_tracking/set_gravity_as_origin"           value="false" />
+        <param name="pos_tracking/imu_fusion"           value="false" />
+        <param name="pos_tracking/publish_tf"           value="false" />
+        <param name="pos_tracking/publish_map_tf"       value="false" />
+        <param name="pos_tracking/map_frame"       value="map" />
+        <param name="pos_tracking/odometry_frame"       value="odom" />
+        <param name="pos_tracking/area_memory_db_path"       value="" />
+        <param name="pos_tracking/save_area_memory_db_on_exit"       value="false" />
+        <param name="pos_tracking/area_memory"       value="false" />
+        <param name="pos_tracking/floor_alignment"       value="false" />
+        <param name="pos_tracking/init_odom_with_first_valid_pose"       value="false" />
+        <param name="pos_tracking/path_pub_rate"       value="2.0" />
+        <param name="pos_tracking/path_max_count"       value="-1" />
+        <param name="pos_tracking/two_d_mode"       value="false" />
+        <param name="pos_tracking/fixed_z_value"       value="0.00" />
+        <param name="pos_tracking/depth_min_range"       value="0.00" />
+        <param name="pos_tracking/set_as_static"       value="true" />
+
+        <!-- Mapping -->
+        <param name="mapping/mapping_enabled"       value="false" />
+        <param name="mapping/resolution"       value="0.05" />
+        <param name="mapping/max_mapping_range"       value="-1" />
+        <param name="mapping/fused_pointcloud_freq"       value="1.0" />
+        <param name="mapping/clicked_point_topic"       value="/clicked_point" />
+
+        <!-- Sensors -->
+        <param name="sensors/sensors_timestamp_sync"       value="false" />
+        <param name="sensors/max_pub_rate"       value="200." />
+        <param name="sensors/publish_imu_tf"       value="false" />
+
+        <!-- Object Detection -->
+        <param name="object_detection/od_enabled"       value="false" />
+        <param name="object_detection/model"       value="MULTI_CLASS_BOX_ACCURATE" />
+        <param name="object_detection/max_range"       value="15." />
+        <param name="object_detection/allow_reduced_precision_inference"       value="false" />
+        <param name="object_detection/prediction_timeout"       value="0.5" />
+        <param name="object_detection/object_tracking_enabled"       value="false" />
+        <param name="object_detection/mc_people"       value="false" />
+        <param name="object_detection/mc_vehicle"       value="false" />
+        <param name="object_detection/mc_bag"       value="false" />
+        <param name="object_detection/mc_animal"       value="false" />
+        <param name="object_detection/mc_electronics"       value="false" />
+        <param name="object_detection/mc_fruit_vegetable"       value="false" />
+        <param name="object_detection/mc_sport"       value="false" />
+    </node>
+</launch>
