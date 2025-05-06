@@ -30,7 +30,7 @@ if __name__ == "__main__":
         right_motor_ids=[8, 9, 10, 11, 12, 13, 14, 15],
         motors_port="/dev/tty_joylo",
         left_arm_joint_signs=[-1, -1, 1, 1, 1, 1],
-        right_arm_joint_signs=[-1, -1, 1, 1, -1, 1],
+        right_arm_joint_signs=[-1, -1, -1, 1, 1, 1],
         left_slave_motor_ids=[1, 3],
         left_master_motor_ids=[0, 2],
         right_slave_motor_ids=[9, 11],
