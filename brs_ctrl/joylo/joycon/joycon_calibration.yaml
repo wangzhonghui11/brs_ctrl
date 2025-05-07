@@ -2,30 +2,30 @@ joystick:
   left:
     horizontal:
       center_range:
-      - 2048
-      - 2048
+      - 1874
+      - 1877
       limits:
-      - 0
-      - 4092
+      - 505
+      - 3304
     vertical:
       center_range:
-      - 2047
-      - 2047
+      - 2151
+      - 2155
       limits:
-      - 0
-      - 4095
+      - 1010
+      - 3363
   right:
     horizontal:
       center_range:
-      - 2047
-      - 2047
+      - 2175
+      - 2178
       limits:
-      - 3
-      - 4095
+      - 859
+      - 3472
     vertical:
       center_range:
-      - 2048
-      - 2048
+      - 1884
+      - 1887
       limits:
-      - 0
-      - 4095
+      - 696
+      - 3001

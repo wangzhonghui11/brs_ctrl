@@ -28,7 +28,7 @@ if __name__ == "__main__":
     joylo_arms = JoyLoArmPositionController(
         left_motor_ids=[0, 1, 2, 3, 4, 5, 6, 7],
         right_motor_ids=[8, 9, 10, 11, 12, 13, 14, 15],
-        motors_port="/dev/tty_joylo",
+        motors_port="/dev/ttyUSB0",
         left_arm_joint_signs=[-1, -1, 1, 1, 1, 1],
         right_arm_joint_signs=[-1, -1, -1, 1, 1, 1],
         left_slave_motor_ids=[1, 3],
@@ -65,19 +65,22 @@ if __name__ == "__main__":
             joycon_action = joycon.act(curr_torso_qs)
             robot_torso_cmd = np.zeros((4,))
             robot_torso_cmd[:] = joycon_action["torso_cmd"][:]
-
-            robot.control(
+            print("left:",left_joylo_q)
+            print("right:",right_joylo_q)
+            print("robot_torso_cmd:",robot_torso_cmd)
+            print("joycon_action[]:", joycon_action["mobile_base_cmd"])
+            """robot.control(
                 arm_cmd={
-                    "left": left_joylo_q,
-                    "right": right_joylo_q,
+                    "left": None,
+                    "right": None,
                 },
                 gripper_cmd={
                     "left": joycon_action["gripper_cmd"]["left"],
                     "right": joycon_action["gripper_cmd"]["right"],
                 },
-                torso_cmd=robot_torso_cmd,
-                base_cmd=joycon_action["mobile_base_cmd"],
-            )
+                torso_cmd=None,
+                base_cmd=None,
+            )"""
             pbar.update(1)
 
     except KeyboardInterrupt:

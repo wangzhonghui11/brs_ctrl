@@ -313,7 +313,6 @@ class DXLBaseDriver(DXLBaseDriverProtocol):
                         break
                 if not read_error_occur:
                     self._joint_positions = _joint_angles
-
                 _joint_velocities = np.zeros(len(self._ids), dtype=int)
                 read_error_occur = False
                 for i, dxl_id in enumerate(self._ids):
@@ -384,17 +383,19 @@ class DXLBaseDriver(DXLBaseDriverProtocol):
     def get_joints(
         self, block=False
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+
         if (
             self._multithread_read_joints
             and getattr(self, "_reading_thread", None) is None
             and not block
         ):
             self.start_read_thread()
-
         if self._multithread_read_joints and not block:
             while self._joint_positions is None:
                 time.sleep(0.1)
+
         else:
+
             with self._lock:
                 _joint_angles = np.zeros(len(self._ids), dtype=int)
                 dxl_comm_result = self._pos_read.txRxPacket()
@@ -417,7 +418,6 @@ class DXLBaseDriver(DXLBaseDriverProtocol):
                         break
                 if not read_error_occur:
                     self._joint_positions = _joint_angles
-
                 _joint_velocities = np.zeros(len(self._ids), dtype=int)
                 dxl_comm_result = self._vel_read.txRxPacket()
                 if dxl_comm_result != Comm.SUCCESS.value:
@@ -487,7 +487,6 @@ class DXLBaseDriver(DXLBaseDriverProtocol):
                             break
                     if not read_error_occur:
                         self._gripper_velocities = _gripper_velocities
-
         rtn = (
             (
                 self._joint_positions.copy(),

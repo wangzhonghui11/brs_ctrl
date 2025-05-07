@@ -7,11 +7,11 @@ from brs_ctrl.joylo.joylo_arms.dxl.joint_impedance import DXLJointImpedanceContr
 
 
 class JoyLoArmPositionController:
-    LEFT_JOINT_LIMIT_LOW = np.array([-2.8798, 0, -3.3161, -2.8798, -1.6581, -2.8798])
-    LEFT_JOINT_LIMIT_HIGH = np.array([2.8798, 3.2289, 0, 2.8798, 1.6581, 2.8798])
+    LEFT_JOINT_LIMIT_LOW = np.array([-0.5798, 1.5, -2.6161, -2.8798, -1.6581, -2.8798])
+    LEFT_JOINT_LIMIT_HIGH = np.array([2.3798, 3.2289, 0, 2.8798, 1.6581, 2.8798])
 
-    RIGHT_JOINT_LIMIT_LOW = np.array([-2.8798, 0, -3.3161, -2.8798, -1.6581, -2.8798])
-    RIGHT_JOINT_LIMIT_HIGH = np.array([2.8798, 3.2289, 0, 2.8798, 1.6581, 2.8798])
+    RIGHT_JOINT_LIMIT_LOW = np.array([-2.3798, 1.5, -2.68161, -2.8798, -1.6581, -2.8798])
+    RIGHT_JOINT_LIMIT_HIGH = np.array([0.5798, 3.2289, 0.0, 2.8798, 1.6581, 2.8798])
 
     def __init__(
         self,

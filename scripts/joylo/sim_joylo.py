@@ -17,7 +17,7 @@ if __name__ == "__main__":
     joylo_arms = JoyLoArmPositionController(
         left_motor_ids=[0, 1, 2, 3, 4, 5, 6, 7],
         right_motor_ids=[8, 9, 10, 11, 12, 13, 14, 15],
-        motors_port="/dev/tty_joylo",
+        motors_port="/dev/ttyUSB0",
         left_arm_joint_signs=[-1, -1, 1, 1, 1, 1],
         right_arm_joint_signs=[-1, -1, -1, 1, 1, 1],
         left_slave_motor_ids=[1, 3],
@@ -52,10 +52,12 @@ if __name__ == "__main__":
 
     while pb.isConnected():
         joylo_actions = joylo.act(curr_torso_qs)
-
+        print("左臂：",joylo_actions["arm_cmd"]["left"])
+        print("右臂：", joylo_actions["arm_cmd"]["right"])
         for i, q in zip(torso_joint_idxs, joylo_actions["torso_cmd"]):
             pb.resetJointState(robot, i, q)
         for i, q in enumerate(joylo_actions["arm_cmd"]["left"]):
+
             pb.resetJointState(robot, left_arm_joint_idxs[i], q)
         for i, q in enumerate(joylo_actions["arm_cmd"]["right"]):
             pb.resetJointState(robot, right_arm_joint_idxs[i], q)
