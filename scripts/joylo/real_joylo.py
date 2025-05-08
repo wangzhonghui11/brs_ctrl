@@ -71,15 +71,15 @@ if __name__ == "__main__":
             print("joycon_action[]:", joycon_action["mobile_base_cmd"])
             robot.control(
                 arm_cmd={
-                    "left": None,
-                    "right": None,
+                    "left": left_joylo_q,
+                    "right": right_joylo_q,
                 },
                 gripper_cmd={
                     "left": joycon_action["gripper_cmd"]["left"],
                     "right": joycon_action["gripper_cmd"]["right"],
                 },
-                torso_cmd=None,
-                base_cmd=None,
+                torso_cmd=robot_torso_cmd,
+                base_cmd=joycon_action["mobile_base_cmd"],
             )
             pbar.update(1)
 

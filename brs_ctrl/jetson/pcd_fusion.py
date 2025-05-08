@@ -72,7 +72,7 @@ class PCDFusionPublisher:
         point_cloud_topics = point_cloud_topics or {
             "left_wrist": "/zed_multi_cams/zed2_left_wrist/zed_nodelet_left_wrist/point_cloud/cloud_registered",
             "right_wrist": "/zed_multi_cams/zed2_right_wrist/zed_nodelet_right_wrist/point_cloud/cloud_registered",
-            "head": "/zed_multi_cams/zed2_head/zed_nodelet_head/point_cloud/cloud_registered",
+            "head": "/hdas/camera_head/point_cloud/cloud_registere",
         }
         camera2link_names = camera2link_names or {
             "left_wrist": "left_wrist_camera",

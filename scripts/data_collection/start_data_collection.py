@@ -18,7 +18,7 @@ def collect_data(args):
     data_folder = args.data_folder
     os.makedirs(data_folder, exist_ok=True)
 
-    data_recorder = R1DataRecorder(record_freq=record_freq, save_rgbd=True,save_odometry=false,save_point_cloud=false,_save_action=false)
+    data_recorder = R1DataRecorder(record_freq=record_freq, save_rgbd=True,save_odometry=false,save_point_cloud=false,save_action=True)
     data_recorder.start_data_recording_thread()
     while not rospy.is_shutdown():
         rospy.loginfo("First press [A] to start recording data.")

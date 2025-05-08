@@ -33,9 +33,10 @@ class R1DataRecorder:
         save_rgbd: bool = False,
         save_point_cloud: bool = False,  # New parameter for point cloud
         save_odometry: bool = False,  # New parameter for odometry
+        save_action: bool = False,
         rgb_topics: Optional[Dict[str, str]] = None,
         depth_topics: Optional[Dict[str, str]] = None,
-        _save_action: Optional[Dict[str, str]] = None,
+
         record_freq: Union[int, float] = 10,
     ):
         joint_state_topics = joint_state_topics or {
@@ -64,7 +65,7 @@ class R1DataRecorder:
             "left_wrist": "/hdas/camera_wrist_left/aligned_depth_to_color/image_raw",
             "right_wrist": "/hdas/camera_wrist_right/aligned_depth_to_color/image_raw",
         }
-        self._save_action=_save_action
+        self._save_action=save_action
         action_topics = action_topics or {
             "left_arm": "/motion_target/target_joint_state_arm_left",
             "right_arm": "/motion_target/target_joint_state_arm_right",
@@ -353,7 +354,12 @@ class R1DataRecorder:
     ):
         if isinstance(data, JointState):
             # joint position action
-            self._action_data[name] = np.array([data.position])
+            self._action_data[name] = {
+            "joint_position": np.array([data.position]),
+            "stamp": np.array(
+                [data.header.stamp.secs + data.header.stamp.nsecs * 1e-9]
+            ),
+        }
         elif isinstance(data, Float32):
             # gripper action
             self._action_data[name] = np.array([data.data])
