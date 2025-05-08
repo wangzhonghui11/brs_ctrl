@@ -2,12 +2,13 @@ from typing import Optional, Dict, Union, List, Literal
 import threading
 import time
 from functools import partial
-
+import cv2
 import rospy
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist
 from std_msgs.msg import Float32, Bool
 from sensor_msgs.msg import JointState, PointCloud2, Image
+from sensor_msgs.msg import CompressedImage
 from cv_bridge import CvBridge
 import numpy as np
 import ros_numpy
@@ -30,8 +31,11 @@ class R1DataRecorder:
         joycon_x_button_topic: str = "/joycon/functional_buttons/x_button",
         joycon_a_button_topic: str = "/joycon/functional_buttons/a_button",
         save_rgbd: bool = False,
+        save_point_cloud: bool = False,  # New parameter for point cloud
+        save_odometry: bool = False,  # New parameter for odometry
         rgb_topics: Optional[Dict[str, str]] = None,
         depth_topics: Optional[Dict[str, str]] = None,
+        _save_action: Optional[Dict[str, str]] = None,
         record_freq: Union[int, float] = 10,
     ):
         joint_state_topics = joint_state_topics or {
@@ -43,21 +47,24 @@ class R1DataRecorder:
             "left_gripper": "/hdas/feedback_gripper_left",
             "right_gripper": "/hdas/feedback_gripper_right",
         }
+        self._save_point_cloud = save_point_cloud  # Store point cloud flag
+        self._save_odometry = save_odometry      # Store odometry flag
         point_cloud_topics = point_cloud_topics or {
             "fused": "/r1_jetson/fused_pcd",
         }
         odom_topics = odom_topics or "/camera/odom/sample"
         self._save_rgbd = save_rgbd
         rgb_topics = rgb_topics or {
-            "head": "/zed_multi_cams/zed2_head/zed_nodelet_head/rgb/image_rect_color",
-            "left_wrist": "/zed_multi_cams/zed2_left_wrist/zed_nodelet_left_wrist/rgb/image_rect_color",
-            "right_wrist": "/zed_multi_cams/zed2_right_wrist/zed_nodelet_right_wrist/rgb/image_rect_color",
+            "head": "/hdas/camera_head/left_raw/image_raw_color",
+            "left_wrist": "/hdas/camera_wrist_left/color/image_raw",
+            "right_wrist": "/hdas/camera_wrist_right/color/image_raw",
         }
         depth_topics = depth_topics or {
-            "head": "/zed_multi_cams/zed2_head/zed_nodelet_head/depth/depth_registered",
-            "left_wrist": "/zed_multi_cams/zed2_left_wrist/zed_nodelet_left_wrist/depth/depth_registered",
-            "right_wrist": "/zed_multi_cams/zed2_right_wrist/zed_nodelet_right_wrist/depth/depth_registered",
+            "head": "/hdas/camera_head/depth/depth_registered",
+            "left_wrist": "/hdas/camera_wrist_left/aligned_depth_to_color/image_raw",
+            "right_wrist": "/hdas/camera_wrist_right/aligned_depth_to_color/image_raw",
         }
+        self._save_action=_save_action
         action_topics = action_topics or {
             "left_arm": "/motion_target/target_joint_state_arm_left",
             "right_arm": "/motion_target/target_joint_state_arm_right",
@@ -78,22 +85,26 @@ class R1DataRecorder:
         self._joint_state_data: Dict[str, Optional[np.array]] = {
             k: None for k in joint_state_topics
         }
+        print("_joint_state_data",self._joint_state_data)
         self._gripper_state_data: Dict[str, Optional[np.array]] = {
             k: None for k in gripper_state_topics
         }
-        self._point_cloud_data: Dict[str, Optional[Dict[str, np.array]]] = {
-            k: None for k in point_cloud_topics
-        }
-        self._odom_data: Dict[str, Optional[np.array]] = {
-            "position": None,
-            "orientation": None,
-            "linear_velocity": None,
-            "angular_velocity": None,
-            "stamp": None,
-        }
-        self._action_data: Dict[str, Optional[np.array]] = {
-            k: None for k in action_topics
-        }
+        if self._save_point_cloud:
+            self._point_cloud_data: Dict[str, Optional[Dict[str, np.array]]] = {
+                k: None for k in point_cloud_topics
+            }
+        if self._save_odometry:
+            self._odom_data: Dict[str, Optional[np.array]] = {
+                "position": None,
+                "orientation": None,
+                "linear_velocity": None,
+                "angular_velocity": None,
+                "stamp": None,
+            }
+        if self._save_action:
+            self._action_data: Dict[str, Optional[np.array]] = {
+                k: None for k in action_topics
+            }
         self._joycon_functional_buttons_data = {
             "confirm": None,
             "discard": None,
@@ -117,29 +128,33 @@ class R1DataRecorder:
             )
             for k, v in joint_state_topics.items()
         }
+        print("_joint_state_subs",self._joint_state_subs)
         self._gripper_state_subs = {
             k: rospy.Subscriber(
                 v, JointState, partial(self._update_gripper_callback, name=k)
             )
             for k, v in gripper_state_topics.items()
         }
-        self._point_cloud_subs = {
-            k: rospy.Subscriber(
-                v, PointCloud2, partial(self._update_pointcloud_callback, name=k)
+        if self._save_point_cloud:
+            self._point_cloud_subs = {
+                k: rospy.Subscriber(
+                    v, PointCloud2, partial(self._update_pointcloud_callback, name=k)
+                )
+                for k, v in point_cloud_topics.items()
+            }
+        if self._save_odometry:
+            self._odom_sub = rospy.Subscriber(
+                odom_topics, Odometry, self._update_odom_callback
             )
-            for k, v in point_cloud_topics.items()
-        }
-        self._odom_sub = rospy.Subscriber(
-            odom_topics, Odometry, self._update_odom_callback
-        )
-        self._action_subs = {
-            k: rospy.Subscriber(
-                v,
-                all_action_topic_dtypes[k],
-                partial(self._update_action_callback, name=k),
-            )
-            for k, v in action_topics.items()
-        }
+        if self._save_action:
+            self._action_subs = {
+                k: rospy.Subscriber(
+                    v,
+                    all_action_topic_dtypes[k],
+                    partial(self._update_action_callback, name=k),
+                )
+                for k, v in action_topics.items()
+            }
         self._joycon_functional_buttons_subs = {
             "y": rospy.Subscriber(
                 joycon_y_button_topic,
@@ -183,14 +198,17 @@ class R1DataRecorder:
         for topic in gripper_state_topics.values():
             rospy.wait_for_message(topic, JointState)
         rospy.loginfo("All gripper state topics are ready!")
-        for topic in point_cloud_topics.values():
-            rospy.wait_for_message(topic, PointCloud2)
-        rospy.loginfo("All point cloud topics are ready!")
-        rospy.wait_for_message(odom_topics, Odometry)
-        rospy.loginfo("Odometry topic is ready!")
-        for k, topic in action_topics.items():
-            rospy.wait_for_message(topic, all_action_topic_dtypes[k])
-        rospy.loginfo("All action topics are ready!")
+        if self._save_point_cloud:
+            for topic in point_cloud_topics.values():
+               rospy.wait_for_message(topic, PointCloud2)
+            rospy.loginfo("All point cloud topics are ready!")
+        if self._save_odometry:
+            rospy.wait_for_message(odom_topics, Odometry)
+            rospy.loginfo("Odometry topic is ready!")
+        if self._save_action:
+            for k, topic in action_topics.items():
+               rospy.wait_for_message(topic, all_action_topic_dtypes[k])
+            rospy.loginfo("All action topics are ready!")
         if self._save_rgbd:
             for topic in rgb_topics.values():
                 rospy.wait_for_message(topic, Image)
@@ -216,12 +234,13 @@ class R1DataRecorder:
         self._point_cloud_buffers: Dict[str, Optional[Dict[str, List]]] = {
             k: None for k in point_cloud_topics
         }
+
         self._odom_buffers: Dict[str, Optional[List]] = {
-            "position": None,
-            "orientation": None,
-            "linear_velocity": None,
-            "angular_velocity": None,
-            "stamp": None,
+                "position": None,
+                "orientation": None,
+                "linear_velocity": None,
+                "angular_velocity": None,
+                "stamp": None,
         }
         self._rgb_buffers: Dict[str, Optional[List]] = (
             {k: None for k in rgb_topics} if self._save_rgbd else None
@@ -230,11 +249,12 @@ class R1DataRecorder:
             {k: None for k in depth_topics} if self._save_rgbd else None
         )
         self._action_buffers: Dict[str, Optional[List]] = {
-            k: None for k in action_topics
+           k: None for k in action_topics
         }
         self._timesteps_buffers = None
 
     def _update_joint_state_callback(self, js_msg: JointState, name: str):
+
         self._joint_state_data[name] = {
             "joint_position": np.array([js_msg.position]),
             "joint_velocity": np.array([js_msg.velocity]),
@@ -244,6 +264,7 @@ class R1DataRecorder:
                 [js_msg.header.stamp.secs + js_msg.header.stamp.nsecs * 1e-9]
             ),
         }
+        #print("_joint_state_data", self._joint_state_data["torso"])
 
     def _update_gripper_callback(self, gs_msg: JointState, name: str):
         self._gripper_state_data[name] = {
@@ -356,7 +377,7 @@ class R1DataRecorder:
             if (
                 all(v is not None for v in self._joint_state_data.values())
                 and all(v is not None for v in self._gripper_state_data.values())
-                and all(v is not None for v in self._point_cloud_data.values())
+                #and all(v is not None for v in self._point_cloud_data.values())
             ):
                 with self._obs_buffer_lock:
                     with self._action_buffer_lock:
@@ -370,22 +391,24 @@ class R1DataRecorder:
                                 self._gripper_state_buffers[k] = [v]
                             else:
                                 self._gripper_state_buffers[k].append(v)
-                        for k, v in self._point_cloud_data.items():
-                            if self._point_cloud_buffers[k] is None:
-                                self._point_cloud_buffers[k] = {
-                                    "xyz": [v["xyz"]],
-                                    "rgb": [v["rgb"]],
-                                    "stamp": [v["stamp"]],
-                                }
-                            else:
-                                self._point_cloud_buffers[k]["xyz"].append(v["xyz"])
-                                self._point_cloud_buffers[k]["rgb"].append(v["rgb"])
-                                self._point_cloud_buffers[k]["stamp"].append(v["stamp"])
-                        for k, v in self._odom_data.items():
-                            if self._odom_buffers[k] is None:
-                                self._odom_buffers[k] = [v]
-                            else:
-                                self._odom_buffers[k].append(v)
+                        if self._save_point_cloud:
+                            for k, v in self._point_cloud_data.items():
+                                if self._point_cloud_buffers[k] is None:
+                                    self._point_cloud_buffers[k] = {
+                                        "xyz": [v["xyz"]],
+                                        "rgb": [v["rgb"]],
+                                        "stamp": [v["stamp"]],
+                                    }
+                                else:
+                                    self._point_cloud_buffers[k]["xyz"].append(v["xyz"])
+                                    self._point_cloud_buffers[k]["rgb"].append(v["rgb"])
+                                    self._point_cloud_buffers[k]["stamp"].append(v["stamp"])
+                        if self._save_odometry:
+                            for k, v in self._odom_data.items():
+                                if self._odom_buffers[k] is None:
+                                    self._odom_buffers[k] = [v]
+                                else:
+                                    self._odom_buffers[k].append(v)
                         if self._save_rgbd:
                             for k, v in self._rgb_data.items():
                                 if self._rgb_buffers[k] is None:
@@ -401,11 +424,12 @@ class R1DataRecorder:
                             self._timesteps_buffers = [rospy.get_time()]
                         else:
                             self._timesteps_buffers.append(rospy.get_time())
-                        for k, v in self._action_data.items():
-                            if self._action_buffers[k] is None:
-                                self._action_buffers[k] = [v]
-                            else:
-                                self._action_buffers[k].append(v)
+                        if self._save_action:
+                            for k, v in self._action_data.items():
+                                if self._action_buffers[k] is None:
+                                    self._action_buffers[k] = [v]
+                                else:
+                                    self._action_buffers[k].append(v)
             # run at the desired frequency
             self._rate.sleep()
 
@@ -437,9 +461,12 @@ class R1DataRecorder:
                 self._gripper_state_buffers = {
                     k: None for k in self._gripper_state_buffers
                 }
-                self._point_cloud_buffers = {k: None for k in self._point_cloud_buffers}
-                self._odom_buffers = {k: None for k in self._odom_buffers}
-                self._action_buffers = {k: None for k in self._action_buffers}
+                if self._save_point_cloud:
+                    self._point_cloud_buffers = {k: None for k in self._point_cloud_buffers}
+                if self._save_odometry:
+                    self._odom_buffers = {k: None for k in self._odom_buffers}
+                if self._save_action:
+                    self._action_buffers = {k: None for k in self._action_buffers}
                 self._timesteps_buffers = None
                 if self._save_rgbd:
                     self._rgb_buffers = {k: None for k in self._rgb_buffers}
@@ -452,6 +479,7 @@ class R1DataRecorder:
         with self._obs_buffer_lock:
             with self._action_buffer_lock:
                 # first print diagnostic statistics so that users can determine to save or discard the data
+                print("_joint_state_buffers",self._joint_state_buffers["torso"])
                 diag_stat = {
                     "collected_time": time.strftime("%Y-%m-%d-%H-%M-%S"),
                     "horizon": len(self._joint_state_buffers["torso"]),
@@ -461,16 +489,18 @@ class R1DataRecorder:
                 delta_time_avg = np.mean(timesteps_data[1:] - timesteps_data[:-1])
                 diag_stat["recording_freq"] = 1 / delta_time_avg
                 # compute point cloud frequency
-                pcd_freqs = {}
-                for k, pcd_buffer in self._point_cloud_buffers.items():
-                    stamps = np.concatenate(pcd_buffer["stamp"])
+                if self._save_point_cloud:
+                    pcd_freqs = {}
+                    for k, pcd_buffer in self._point_cloud_buffers.items():
+                        stamps = np.concatenate(pcd_buffer["stamp"])
+                        delta_time = stamps[1:] - stamps[:-1]
+                        pcd_freqs[f"obs_freq/pcd_{k}"] = 1 / np.mean(delta_time)
+                    diag_stat.update(pcd_freqs)
+                    # compute odom frequency
+                if self._save_odometry:
+                    stamps = np.concatenate(self._odom_buffers["stamp"])
                     delta_time = stamps[1:] - stamps[:-1]
-                    pcd_freqs[f"obs_freq/pcd_{k}"] = 1 / np.mean(delta_time)
-                diag_stat.update(pcd_freqs)
-                # compute odom frequency
-                stamps = np.concatenate(self._odom_buffers["stamp"])
-                delta_time = stamps[1:] - stamps[:-1]
-                diag_stat["obs_freq/odom"] = 1 / np.mean(delta_time)
+                    diag_stat["obs_freq/odom"] = 1 / np.mean(delta_time)
                 # compute rgbd frequency if enabled
                 if self._save_rgbd:
                     rgb_freqs = {}
@@ -516,54 +546,56 @@ class R1DataRecorder:
                     k: any_concat(v, dim=0)
                     for k, v in self._gripper_state_buffers.items()
                 }
-                pcd_data = {}
-                for k, pcd_buffer in self._point_cloud_buffers.items():
-                    # find the max number of points
-                    max_pcd_n = max(
-                        len(pcd_buffer["xyz"][i]) for i in range(len(pcd_buffer["xyz"]))
-                    )
-                    # pad to the max number of points
-                    padded_pcd_xyz, padded_pcd_rgb, padding_mask = [], [], []
-                    for xyz, rgb in zip(pcd_buffer["xyz"], pcd_buffer["rgb"]):
-                        padded_pcd_xyz.append(
-                            np.concatenate(
-                                [
-                                    xyz,
-                                    np.zeros(
-                                        (max_pcd_n - len(xyz), 3), dtype=xyz.dtype
-                                    ),
-                                ],
-                                axis=0,
-                            )
+                if self._save_point_cloud:
+                    pcd_data = {}
+                    for k, pcd_buffer in self._point_cloud_buffers.items():
+                        # find the max number of points
+                        max_pcd_n = max(
+                            len(pcd_buffer["xyz"][i]) for i in range(len(pcd_buffer["xyz"]))
                         )
-                        padded_pcd_rgb.append(
-                            np.concatenate(
-                                [
-                                    rgb,
-                                    np.zeros(
-                                        (max_pcd_n - len(rgb), 3), dtype=rgb.dtype
-                                    ),
-                                ],
-                                axis=0,
+                        # pad to the max number of points
+                        padded_pcd_xyz, padded_pcd_rgb, padding_mask = [], [], []
+                        for xyz, rgb in zip(pcd_buffer["xyz"], pcd_buffer["rgb"]):
+                            padded_pcd_xyz.append(
+                                np.concatenate(
+                                    [
+                                        xyz,
+                                        np.zeros(
+                                            (max_pcd_n - len(xyz), 3), dtype=xyz.dtype
+                                        ),
+                                    ],
+                                    axis=0,
+                                )
                             )
-                        )
-                        padding_mask.append(
-                            np.concatenate(
-                                [
-                                    np.ones(len(xyz), dtype=bool),
-                                    np.zeros(max_pcd_n - len(xyz), dtype=bool),
-                                ],
-                                axis=0,
+                            padded_pcd_rgb.append(
+                                np.concatenate(
+                                    [
+                                        rgb,
+                                        np.zeros(
+                                            (max_pcd_n - len(rgb), 3), dtype=rgb.dtype
+                                        ),
+                                    ],
+                                    axis=0,
+                                )
                             )
-                        )
-                    pcd_data[k] = {
-                        "xyz": np.stack(padded_pcd_xyz, axis=0),  # (T, N_max, 3)
-                        "rgb": np.stack(padded_pcd_rgb, axis=0),  # (T, N_max, 3)
-                        "padding_mask": np.stack(padding_mask, axis=0),  # (T, N_max)
+                            padding_mask.append(
+                                np.concatenate(
+                                    [
+                                        np.ones(len(xyz), dtype=bool),
+                                        np.zeros(max_pcd_n - len(xyz), dtype=bool),
+                                    ],
+                                    axis=0,
+                                )
+                            )
+                        pcd_data[k] = {
+                            "xyz": np.stack(padded_pcd_xyz, axis=0),  # (T, N_max, 3)
+                            "rgb": np.stack(padded_pcd_rgb, axis=0),  # (T, N_max, 3)
+                            "padding_mask": np.stack(padding_mask, axis=0),  # (T, N_max)
+                        }
+                if self._save_odometry:
+                    odom_data = {
+                        k: any_concat(v, dim=0) for k, v in self._odom_buffers.items()
                     }
-                odom_data = {
-                    k: any_concat(v, dim=0) for k, v in self._odom_buffers.items()
-                }
                 if self._save_rgbd:
                     rgb_data = {
                         k: any_concat(v, dim=0) for k, v in self._rgb_buffers.items()
@@ -571,9 +603,10 @@ class R1DataRecorder:
                     depth_data = {
                         k: any_concat(v, dim=0) for k, v in self._depth_buffers.items()
                     }
-                action_data = {
-                    k: any_concat(v, dim=0) for k, v in self._action_buffers.items()
-                }
+                if self._save_action:
+                    action_data = {
+                        k: any_concat(v, dim=0) for k, v in self._action_buffers.items()
+                    }
                 # prompt users to save or discard the data
                 rospy.loginfo(
                     """Press [Y] to confirm saving the data, [X] to discard"""
@@ -613,11 +646,13 @@ class R1DataRecorder:
                     for ks, vs in gripper_state_data.items():
                         for k, v in vs.items():
                             obs_grp.create_dataset(f"gripper_state/{ks}/{k}", data=v)
-                    for ks, vs in pcd_data.items():
-                        for k, v in vs.items():
-                            obs_grp.create_dataset(f"point_cloud/{ks}/{k}", data=v)
-                    for k, v in odom_data.items():
-                        obs_grp.create_dataset(f"odom/{k}", data=v)
+                    if self._save_point_cloud:
+                        for ks, vs in pcd_data.items():
+                            for k, v in vs.items():
+                                obs_grp.create_dataset(f"point_cloud/{ks}/{k}", data=v)
+                    if self._save_odometry:
+                        for k, v in odom_data.items():
+                            obs_grp.create_dataset(f"odom/{k}", data=v)
                     if self._save_rgbd:
                         for ks, vs in rgb_data.items():
                             for k, v in vs.items():
@@ -625,9 +660,10 @@ class R1DataRecorder:
                         for ks, vs in depth_data.items():
                             for k, v in vs.items():
                                 obs_grp.create_dataset(f"depth/{ks}/{k}", data=v)
-                    action_grp = f.create_group("action")
-                    for k, v in action_data.items():
-                        action_grp.create_dataset(k, data=v)
+                    if self._save_action:
+                        action_grp = f.create_group("action")
+                        for k, v in action_data.items():
+                            action_grp.create_dataset(k, data=v)
                     f.close()
                     rospy.loginfo(
                         f"One trajectory recorded. Data saved to {save_path}."

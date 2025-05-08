@@ -4,6 +4,7 @@ import time
 import argparse
 import numpy as np
 import rospy
+from sympy import false
 
 from brs_ctrl.data_recorder import R1DataRecorder
 
@@ -17,7 +18,7 @@ def collect_data(args):
     data_folder = args.data_folder
     os.makedirs(data_folder, exist_ok=True)
 
-    data_recorder = R1DataRecorder(record_freq=record_freq, save_rgbd=True)
+    data_recorder = R1DataRecorder(record_freq=record_freq, save_rgbd=True,save_odometry=false,save_point_cloud=false,_save_action=false)
     data_recorder.start_data_recording_thread()
     while not rospy.is_shutdown():
         rospy.loginfo("First press [A] to start recording data.")
