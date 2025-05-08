@@ -212,6 +212,10 @@ class JoyLoArmPositionController:
     @property
     def q(self):
         motors_positions = self._dxl_controller.curr_positions_and_velocities[0]
+        print("motors_positions:",motors_positions)
+        abs_sum = np.sum(np.abs(motors_positions))
+        if abs_sum < 200:
+            raise RuntimeError(f"Motor fault detected! Positions sum too low: {abs_sum}")
         left_arm_q = motors_positions[self._motors_idxs["left"]]
         right_arm_q = motors_positions[self._motors_idxs["right"]]
         left_arm_q = np.clip(
