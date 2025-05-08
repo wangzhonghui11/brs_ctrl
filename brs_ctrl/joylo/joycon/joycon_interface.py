@@ -7,8 +7,7 @@ import numpy as np
 from pyjoycon import JoyCon, get_R_id, get_L_id
 import rospy
 from std_msgs.msg import Bool
-
-
+import time
 class R1JoyConInterface:
     torso_joint_high = np.array([1.8326, 2.5307, 1.8326, 3.0543])
     torso_joint_low = np.array([-1.1345, -2.7925, -2.0944, -3.0543])
@@ -106,7 +105,11 @@ class R1JoyConInterface:
             self._right_gripper_button_pressed_times
         ) = 0
         self._joystick_ema_alpha = joystick_ema_alpha
-
+        # 初始化变量（放在__init__中）
+        self._left_gripper_pos = 0.1  # 当前夹爪位置 (0.1=开, 1.0=闭)
+        self._right_gripper_pos = 0.1
+        self._gripper_speed = 0.9  # 每帧移动量
+        self._last_time = time.time()
         jc_id_left = get_L_id()
         jc_id_right = get_R_id()
         assert jc_id_left[0] is not None, "Failed to connect to Left JoyCon!"
@@ -341,32 +344,27 @@ class R1JoyConInterface:
 
         # process gripper
         if self._gripper_toggle_mode:
-            if self.jc_left.get_button_zl():
-                if self._left_gripper_button_pressed_times >= 30:
-                    left_gripper = (
-                        1.0 if self._left_gripper_current_action < 0.5 else 0.1
-                    )
-                    self._left_gripper_current_action = left_gripper
-                    self._left_gripper_button_pressed_times = 0
-                else:
-                    left_gripper = self._left_gripper_current_action
-                    self._left_gripper_button_pressed_times += 1
-            else:
-                left_gripper = self._left_gripper_current_action
+            # 计算时间增量（delta time）
+            current_time = time.time()
+            delta_time = current_time - self._last_time
+            self._last_time = current_time
 
-            if self.jc_right.get_button_zr():
-                if self._right_gripper_button_pressed_times >= 30:
-                    right_gripper = (
-                        1.0 if self._right_gripper_current_action < 0.5 else 0.1
-                    )
-                    self._right_gripper_current_action = right_gripper
-                    self._right_gripper_button_pressed_times = 0
-                else:
-                    right_gripper = self._right_gripper_current_action
-                    self._right_gripper_button_pressed_times += 1
-            else:
-                right_gripper = self._right_gripper_current_action
+            # 左夹爪控制
+            if self.jc_left.get_button_zl():  # 按住ZL慢慢闭合
+                self._left_gripper_pos = min(1.0, self._left_gripper_pos + self._gripper_speed * delta_time)
+            elif self.jc_left.get_button_l():  # 按住L慢慢张开
+                self._left_gripper_pos = max(0.1, self._left_gripper_pos - self._gripper_speed * delta_time)
+
+            # 右夹爪控制
+            if self.jc_right.get_button_zr():  # 按住ZR慢慢闭合
+                self._right_gripper_pos = min(1.0, self._right_gripper_pos + self._gripper_speed * delta_time)
+            elif self.jc_right.get_button_r():  # 按住R慢慢张开
+                self._right_gripper_pos = max(0.1, self._right_gripper_pos - self._gripper_speed * delta_time)
+
+            left_gripper = self._left_gripper_pos
+            right_gripper = self._right_gripper_pos
         else:
+            # 原始切换模式
             left_gripper = 1.0 if self.jc_left.get_button_zl() else 0.1
             right_gripper = 1.0 if self.jc_right.get_button_zr() else 0.1
 
