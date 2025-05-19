@@ -65,10 +65,10 @@ if __name__ == "__main__":
             joycon_action = joycon.act(curr_torso_qs)
             robot_torso_cmd = np.zeros((4,))
             robot_torso_cmd[:] = joycon_action["torso_cmd"][:]
-            print("left:",left_joylo_q)
+            """print("left:",left_joylo_q)
             print("right:",right_joylo_q)
             print("robot_torso_cmd:",robot_torso_cmd)
-            print("joycon_action[]:", joycon_action["mobile_base_cmd"])
+            print("mobile_base_cmd[]:", joycon_action["mobile_base_cmd"])"""
             robot.control(
                 arm_cmd={
                     "left": left_joylo_q,

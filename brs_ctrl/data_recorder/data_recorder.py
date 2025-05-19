@@ -5,7 +5,7 @@ from functools import partial
 import cv2
 import rospy
 from nav_msgs.msg import Odometry
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Twist,TwistStamped
 from std_msgs.msg import Float32, Bool
 from sensor_msgs.msg import JointState, PointCloud2, Image
 from sensor_msgs.msg import CompressedImage
@@ -80,7 +80,7 @@ class R1DataRecorder:
             "torso": JointState,
             "left_gripper": Float32,
             "right_gripper": Float32,
-            "mobile_base": Twist,
+            "mobile_base": TwistStamped,
         }
 
         self._joint_state_data: Dict[str, Optional[np.array]] = {
@@ -354,20 +354,15 @@ class R1DataRecorder:
     ):
         if isinstance(data, JointState):
             # joint position action
-            self._action_data[name] = {
-            "joint_position": np.array([data.position]),
-            "stamp": np.array(
-                [data.header.stamp.secs + data.header.stamp.nsecs * 1e-9]
-            ),
-        }
+            self._action_data[name] = np.array([data.position])
         elif isinstance(data, Float32):
             # gripper action
             self._action_data[name] = np.array([data.data])
-        elif isinstance(data, Twist):
+        elif isinstance(data, TwistStamped):
             # mobile base action
             # we only care about linear xy and angular z
             self._action_data[name] = np.array(
-                [[data.linear.x, data.linear.y, data.angular.z]]
+                [[data.twist.linear.x, data.twist.linear.y, data.twist.angular.z]]
             )
         else:
             raise ValueError(f"Unsupported action data type: {type(data)}")

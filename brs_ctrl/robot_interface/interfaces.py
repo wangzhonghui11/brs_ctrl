@@ -2,7 +2,7 @@ from typing import Literal, Optional, Dict, Union
 from functools import partial
 
 import rospy
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Twist,TwistStamped
 from sensor_msgs.msg import JointState, PointCloud2, Image
 import ros_numpy
 import numpy as np
@@ -13,6 +13,7 @@ from brs_ctrl.kinematics import R1Kinematics
 from brs_ctrl.robot_interface.grippers.base import BaseGripper
 from brs_ctrl.robot_interface.utils import get_xyz_points
 from brs_ctrl.robot_interface.mobile_base import Odom
+from sympy import false
 
 
 class R1Interface:
@@ -61,7 +62,7 @@ class R1Interface:
         on_arm_cmd_out_of_range: Literal["raise", "clip"] = "clip",
         on_torso_cmd_out_of_range: Literal["raise", "clip"] = "clip",
     ):
-        self._kin_model = R1Kinematics()
+        #self._kin_model = R1Kinematics()
 
         self._left_arm_joint_state_buffer = None
         self._right_arm_joint_state_buffer = None
@@ -141,11 +142,11 @@ class R1Interface:
             self._cv_bridge = self._rgb_subs = self._depth_subs = None
 
         # mobile base
-        self._odom = Odom(
-            odom_topic=odometry_topic,
-            T_odom2base=self._kin_model.T_odom2base,
-            wait_for_first_msg=wait_for_first_odom_msg,
-        )
+        """self._odom = Odom(
+                odom_topic=odometry_topic,
+                T_odom2base=self._kin_model.T_odom2base,
+                wait_for_first_msg=wait_for_first_odom_msg,
+         )"""
         if isinstance(mobile_base_cmd_threshold, float):
             mobile_base_cmd_threshold = np.array(
                 [
@@ -164,9 +165,8 @@ class R1Interface:
         self._mobile_base_cmd_threshold = mobile_base_cmd_threshold
         self._mobile_base_cmd_limit = mobile_base_cmd_limit
         self._mobile_base_vel_cmd_pub = rospy.Publisher(
-            mobile_base_vel_cmd_topic, Twist, queue_size=publisher_node_queue_size
+            mobile_base_vel_cmd_topic, TwistStamped, queue_size=publisher_node_queue_size
         )
-
         self._left_gripper, self._right_gripper = left_gripper, right_gripper
         if self._left_gripper is not None:
             self._left_gripper.init_hook()
@@ -180,7 +180,6 @@ class R1Interface:
 
         self._arm_joint_control_step_interval = arm_joint_control_step_interval
         self._torso_joint_control_step_interval = torso_joint_control_step_interval
-
     def control(
         self,
         *,
@@ -226,13 +225,15 @@ class R1Interface:
                 pass
 
     def _mobile_base_control(self, cmd: np.ndarray):
+
         set_zero = np.abs(cmd) < self._mobile_base_cmd_threshold
         cmd[set_zero] = 0
         cmd = np.clip(cmd, -self._mobile_base_cmd_limit, self._mobile_base_cmd_limit)
-        _cmd = Twist()
-        _cmd.linear.x = cmd[0]
-        _cmd.linear.y = cmd[1]
-        _cmd.angular.z = cmd[2]
+        _cmd = TwistStamped()
+        _cmd.header.stamp = rospy.Time.now()  # 当前时间戳
+        _cmd.twist.linear.x = cmd[0]
+        _cmd.twist.linear.y = cmd[1]
+        _cmd.twist.angular.z = cmd[2]
         self._mobile_base_vel_cmd_pub.publish(_cmd)
 
     def stop_mobile_base(self):

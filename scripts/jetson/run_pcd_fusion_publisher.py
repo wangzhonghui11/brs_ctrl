@@ -1,7 +1,7 @@
 import argparse
 from brs_ctrl.jetson import PCDFusionPublisher
 
-
+# python3 scripts/jetson/run_pcd_fusion_publisher.py --spatial_cutoff 0 2 -1 1 -0.5 1.6 --downsample_N 4096 --use_fps --fps_h=5 --publish_freq=15
 if __name__ == "__main__":
     args = argparse.ArgumentParser()
     args.add_argument(

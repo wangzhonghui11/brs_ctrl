@@ -70,9 +70,9 @@ class PCDFusionPublisher:
             "torso": "/hdas/feedback_torso",
         }
         point_cloud_topics = point_cloud_topics or {
-            "left_wrist": "/zed_multi_cams/zed2_left_wrist/zed_nodelet_left_wrist/point_cloud/cloud_registered",
-            "right_wrist": "/zed_multi_cams/zed2_right_wrist/zed_nodelet_right_wrist/point_cloud/cloud_registered",
-            "head": "/hdas/camera_head/point_cloud/cloud_registere",
+            "left_wrist": "/hdas/camera_wrist_left/depth/color/points",
+            "right_wrist": "/hdas/camera_wrist_right/depth/color/points",
+            "head": "/hdas/camera_head/point_cloud/cloud_registered",
         }
         camera2link_names = camera2link_names or {
             "left_wrist": "left_wrist_camera",
@@ -95,11 +95,11 @@ class PCDFusionPublisher:
         self._point_cloud_data: Dict[str, Optional[Dict[str, np.array]]] = {
             k: None for k in point_cloud_topics
         }
-
+        print("---------")
         # ros node initialization
         rospy.init_node("fused_pcd_publisher_jetson", anonymous=True)
         self._rate = rospy.Rate(publish_freq)
-
+        print("-----1111----")
         self._joint_state_subs = {
             k: rospy.Subscriber(
                 v, JointState, partial(self._update_joint_state_callback, name=k)
@@ -146,9 +146,11 @@ class PCDFusionPublisher:
             curr_right_arm_joint=self._joint_state_data["right_arm"],
             curr_torso_joint=self._joint_state_data["torso"],
         )  # (4, 4)
+
         cam2base = {
             k: link2base[self._camera2link_names[k]] for k in self._point_cloud_data
         }
+
         transformed_pcd_xyz, pcd_rgb = [], []
         for k, pcd_data in self._point_cloud_data.items():
             xyz = pcd_data["xyz"]

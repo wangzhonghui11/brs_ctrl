@@ -100,6 +100,11 @@ class R1JoyConInterface:
         self._torso_joints1_2_stand_q = torso_joints1_2_stand_q
         self._torso_joints1_2_squat_q = torso_joints1_2_squat_q
         self._gripper_toggle_mode = gripper_toggle_mode
+        # 在类初始化中添加状态跟踪变量
+        self.left_gripper_target = 0.1  # 0.1=打开, 1.0=闭合
+        self.right_gripper_target = 0.1
+        self.last_zl_state = False  # 记录上一次按钮状态
+        self.last_zr_state = False
         self._left_gripper_current_action = self._right_gripper_current_action = 0.1
         self._left_gripper_button_pressed_times = (
             self._right_gripper_button_pressed_times
@@ -364,10 +369,24 @@ class R1JoyConInterface:
             left_gripper = self._left_gripper_pos
             right_gripper = self._right_gripper_pos
         else:
-            # 原始切换模式
-            left_gripper = 1.0 if self.jc_left.get_button_zl() else 0.1
-            right_gripper = 1.0 if self.jc_right.get_button_zr() else 0.1
+            current_zl = self.jc_left.get_button_zl()
+            current_zr = self.jc_right.get_button_zr()
 
+            # 左夹爪状态切换（上升沿触发）
+            if current_zl and not self.last_zl_state:  # 只在新按下时触发
+                self.left_gripper_target = 1.0 if self.left_gripper_target < 0.5 else 0.1
+
+            # 右夹爪状态切换（上升沿触发）
+            if current_zr and not self.last_zr_state:
+                self.right_gripper_target = 1.0 if self.right_gripper_target < 0.5 else 0.1
+
+            # 更新记录状态
+            self.last_zl_state = current_zl
+            self.last_zr_state = current_zr
+
+            # 输出控制值
+            left_gripper = self.left_gripper_target
+            right_gripper = self.right_gripper_target
         return {
             "mobile_base_cmd": np.array(base_displacement),
             "torso_controller": "joint_position",
