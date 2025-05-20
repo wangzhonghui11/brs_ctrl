@@ -2,7 +2,7 @@ import time
 import rospy
 import numpy as np
 from tqdm import tqdm
-
+import os
 from brs_ctrl.joylo import JoyLoController
 from brs_ctrl.joylo.joylo_arms import JoyLoArmPositionController
 from brs_ctrl.joylo.joycon import R1JoyConInterface
@@ -12,6 +12,13 @@ from brs_ctrl.robot_interface.grippers import GalaxeaR1Gripper
 
 neutral_left_arm_qs = np.array([1.56, 2.94, -2.54, 0, 0, 0])
 neutral_right_arm_qs = np.array([-1.56, 2.94, -2.54, 0, 0, 0])
+
+def get_motor_port():
+    ports_to_try = ["/dev/ttyUSB0", "/dev/ttyUSB1"]
+    for port in ports_to_try:
+        if os.path.exists(port):
+            return port
+    raise FileNotFoundError("No available motor port found (tried: %s)" % ports_to_try)
 
 
 if __name__ == "__main__":
@@ -28,7 +35,7 @@ if __name__ == "__main__":
     joylo_arms = JoyLoArmPositionController(
         left_motor_ids=[0, 1, 2, 3, 4, 5, 6, 7],
         right_motor_ids=[8, 9, 10, 11, 12, 13, 14, 15],
-        motors_port="/dev/ttyUSB0",
+        motors_port=get_motor_port(),
         left_arm_joint_signs=[-1, -1, 1, 1, 1, 1],
         right_arm_joint_signs=[-1, -1, -1, 1, 1, 1],
         left_slave_motor_ids=[1, 3],
