@@ -1,0 +1,35 @@
+digraph G {
+"hdas_camera_center" -> "hdas_baro_link"[label="Broadcaster: /hdas/hdas_state_publisher\nAverage rate: 10000.000 Hz\nMost recent transform: 0.000 ( 1747040324.994 sec old)\nBuffer length: 0.000 sec\n"];
+"hdas_base_link" -> "hdas_camera_center"[label="Broadcaster: /hdas/hdas_state_publisher\nAverage rate: 10000.000 Hz\nMost recent transform: 0.000 ( 1747040324.994 sec old)\nBuffer length: 0.000 sec\n"];
+"base_link" -> "hdas_base_link"[label="Broadcaster: /hdas/hdas_state_publisher\nAverage rate: 10000.000 Hz\nMost recent transform: 0.000 ( 1747040324.994 sec old)\nBuffer length: 0.000 sec\n"];
+"hdas_camera_center" -> "hdas_left_camera_frame"[label="Broadcaster: /hdas/hdas_state_publisher\nAverage rate: 10000.000 Hz\nMost recent transform: 0.000 ( 1747040324.994 sec old)\nBuffer length: 0.000 sec\n"];
+"hdas_left_camera_frame" -> "hdas_left_camera_optical_frame"[label="Broadcaster: /hdas/hdas_state_publisher\nAverage rate: 10000.000 Hz\nMost recent transform: 0.000 ( 1747040324.994 sec old)\nBuffer length: 0.000 sec\n"];
+"hdas_camera_center" -> "hdas_mag_link"[label="Broadcaster: /hdas/hdas_state_publisher\nAverage rate: 10000.000 Hz\nMost recent transform: 0.000 ( 1747040324.994 sec old)\nBuffer length: 0.000 sec\n"];
+"hdas_camera_center" -> "hdas_right_camera_frame"[label="Broadcaster: /hdas/hdas_state_publisher\nAverage rate: 10000.000 Hz\nMost recent transform: 0.000 ( 1747040324.994 sec old)\nBuffer length: 0.000 sec\n"];
+"hdas_right_camera_frame" -> "hdas_right_camera_optical_frame"[label="Broadcaster: /hdas/hdas_state_publisher\nAverage rate: 10000.000 Hz\nMost recent transform: 0.000 ( 1747040324.994 sec old)\nBuffer length: 0.000 sec\n"];
+"hdas_left_camera_frame" -> "hdas_temp_left_link"[label="Broadcaster: /hdas/hdas_state_publisher\nAverage rate: 10000.000 Hz\nMost recent transform: 0.000 ( 1747040324.994 sec old)\nBuffer length: 0.000 sec\n"];
+"hdas_right_camera_frame" -> "hdas_temp_right_link"[label="Broadcaster: /hdas/hdas_state_publisher\nAverage rate: 10000.000 Hz\nMost recent transform: 0.000 ( 1747040324.994 sec old)\nBuffer length: 0.000 sec\n"];
+"hdas_left_camera_frame" -> "hdas_imu_link"[label="Broadcaster: /hdas/camera_head\nAverage rate: 10000.000 Hz\nMost recent transform: 0.000 ( 1747040324.994 sec old)\nBuffer length: 0.000 sec\n"];
+"hdas/camera_wrist_right_link" -> "hdas/camera_wrist_right_depth_frame"[label="Broadcaster: /hdas/camera_wrist_right/realsense2_camera_manager\nAverage rate: 10000.000 Hz\nMost recent transform: 0.000 ( 1747040324.994 sec old)\nBuffer length: 0.000 sec\n"];
+"hdas/camera_wrist_right_depth_frame" -> "hdas/camera_wrist_right_depth_optical_frame"[label="Broadcaster: /hdas/camera_wrist_right/realsense2_camera_manager\nAverage rate: 10000.000 Hz\nMost recent transform: 0.000 ( 1747040324.994 sec old)\nBuffer length: 0.000 sec\n"];
+"hdas/camera_wrist_right_link" -> "hdas/camera_wrist_right_color_frame"[label="Broadcaster: /hdas/camera_wrist_right/realsense2_camera_manager\nAverage rate: 10000.000 Hz\nMost recent transform: 0.000 ( 1747040324.994 sec old)\nBuffer length: 0.000 sec\n"];
+"hdas/camera_wrist_right_aligned_depth_to_color_frame" -> "hdas/camera_wrist_right_color_optical_frame"[label="Broadcaster: /hdas/camera_wrist_right/realsense2_camera_manager\nAverage rate: 10000.000 Hz\nMost recent transform: 0.000 ( 1747040324.994 sec old)\nBuffer length: 0.000 sec\n"];
+"hdas/camera_wrist_right_link" -> "hdas/camera_wrist_right_aligned_depth_to_color_frame"[label="Broadcaster: /hdas/camera_wrist_right/realsense2_camera_manager\nAverage rate: 10000.000 Hz\nMost recent transform: 0.000 ( 1747040324.994 sec old)\nBuffer length: 0.000 sec\n"];
+"hdas/camera_wrist_left_link" -> "hdas/camera_wrist_left_depth_frame"[label="Broadcaster: /hdas/camera_wrist_left/realsense2_camera_manager\nAverage rate: 10000.000 Hz\nMost recent transform: 0.000 ( 1747040324.994 sec old)\nBuffer length: 0.000 sec\n"];
+"hdas/camera_wrist_left_depth_frame" -> "hdas/camera_wrist_left_depth_optical_frame"[label="Broadcaster: /hdas/camera_wrist_left/realsense2_camera_manager\nAverage rate: 10000.000 Hz\nMost recent transform: 0.000 ( 1747040324.994 sec old)\nBuffer length: 0.000 sec\n"];
+"hdas/camera_wrist_left_link" -> "hdas/camera_wrist_left_color_frame"[label="Broadcaster: /hdas/camera_wrist_left/realsense2_camera_manager\nAverage rate: 10000.000 Hz\nMost recent transform: 0.000 ( 1747040324.994 sec old)\nBuffer length: 0.000 sec\n"];
+"hdas/camera_wrist_left_aligned_depth_to_color_frame" -> "hdas/camera_wrist_left_color_optical_frame"[label="Broadcaster: /hdas/camera_wrist_left/realsense2_camera_manager\nAverage rate: 10000.000 Hz\nMost recent transform: 0.000 ( 1747040324.994 sec old)\nBuffer length: 0.000 sec\n"];
+"hdas/camera_wrist_left_link" -> "hdas/camera_wrist_left_aligned_depth_to_color_frame"[label="Broadcaster: /hdas/camera_wrist_left/realsense2_camera_manager\nAverage rate: 10000.000 Hz\nMost recent transform: 0.000 ( 1747040324.994 sec old)\nBuffer length: 0.000 sec\n"];
+edge [style=invis];
+ subgraph cluster_legend { style=bold; color=black; label ="view_frames Result";
+"Recorded at time: 1747040324.994"[ shape=plaintext ] ;
+ }->"base_link";
+edge [style=invis];
+ subgraph cluster_legend { style=bold; color=black; label ="view_frames Result";
+"Recorded at time: 1747040324.994"[ shape=plaintext ] ;
+ }->"hdas/camera_wrist_right_link";
+edge [style=invis];
+ subgraph cluster_legend { style=bold; color=black; label ="view_frames Result";
+"Recorded at time: 1747040324.994"[ shape=plaintext ] ;
+ }->"hdas/camera_wrist_left_link";
+}

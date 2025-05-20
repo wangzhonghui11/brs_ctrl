@@ -50,6 +50,7 @@ class R1Interface:
         enable_pointcloud: bool = False,
         pointcloud_topic: str = "/r1_jetson/fused_pcd",
         enable_rgbd: bool = False,
+        enable_odm:  bool = False,
         rgb_topics: Optional[Dict[str, str]] = None,
         depth_topics: Optional[Dict[str, str]] = None,
         # ====== common ======
@@ -62,7 +63,8 @@ class R1Interface:
         on_arm_cmd_out_of_range: Literal["raise", "clip"] = "clip",
         on_torso_cmd_out_of_range: Literal["raise", "clip"] = "clip",
     ):
-        #self._kin_model = R1Kinematics()
+        if enable_odm:
+           self._kin_model = R1Kinematics()
 
         self._left_arm_joint_state_buffer = None
         self._right_arm_joint_state_buffer = None
@@ -142,11 +144,12 @@ class R1Interface:
             self._cv_bridge = self._rgb_subs = self._depth_subs = None
 
         # mobile base
-        """self._odom = Odom(
+        if enable_odm:
+            self._odom = Odom(
                 odom_topic=odometry_topic,
                 T_odom2base=self._kin_model.T_odom2base,
                 wait_for_first_msg=wait_for_first_odom_msg,
-         )"""
+             )
         if isinstance(mobile_base_cmd_threshold, float):
             mobile_base_cmd_threshold = np.array(
                 [
@@ -237,7 +240,7 @@ class R1Interface:
         self._mobile_base_vel_cmd_pub.publish(_cmd)
 
     def stop_mobile_base(self):
-        self._mobile_base_vel_cmd_pub.publish(Twist())
+        self._mobile_base_vel_cmd_pub.publish(TwistStamped())
 
     def _upper_body_joint_position_control(
         self,

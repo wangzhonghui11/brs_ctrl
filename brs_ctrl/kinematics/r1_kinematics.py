@@ -79,6 +79,11 @@ class R1Kinematics:
 
         self._odom2base_link = None
 
+    def print_all_link_names(self):
+        """打印所有可用的链接（link）名称"""
+        print("Available link names in the robot model:")
+        for link_name in sorted(self._link_name_to_index.keys()):
+            print(f"- {link_name}")
     def get_link_poses_in_base_link(
         self,
         *,
@@ -87,6 +92,7 @@ class R1Kinematics:
         head_camera_link_name: str = "zed2_left_camera_frame",
         left_eef_link_name: str = "left_gripping_point",
         right_eef_link_name: str = "right_gripping_point",
+        torso_link3_link_name:str="torso_link3",
         head_link_name: str = "head_point",
         curr_left_arm_joint: np.ndarray,
         curr_right_arm_joint: np.ndarray,
@@ -142,6 +148,7 @@ class R1Kinematics:
         head_camera_link_idx = self._link_name_to_index[head_camera_link_name]
         left_eef_link_idx = self._link_name_to_index[left_eef_link_name]
         right_eef_link_idx = self._link_name_to_index[right_eef_link_name]
+        torso_link3_idx = self._link_name_to_index[torso_link3_link_name]
         head_link_idx = self._link_name_to_index[head_link_name]
 
         (
@@ -150,6 +157,7 @@ class R1Kinematics:
             head_camera_ls,
             left_eef_ls,
             right_eef_ls,
+            torso3_ls,
             head_eef_ls,
         ) = pb.getLinkStates(
             self._pb_robot_id,
@@ -159,6 +167,7 @@ class R1Kinematics:
                 head_camera_link_idx,
                 left_eef_link_idx,
                 right_eef_link_idx,
+                torso_link3_idx,
                 head_link_idx,
             ],
             physicsClientId=self._pb_client_id,
@@ -186,6 +195,10 @@ class R1Kinematics:
         head_eef_position, head_eef_quaternion = (
             np.array(head_eef_ls[0]),
             head_eef_ls[1],
+        )
+        torso3_position, torso3_quaternion = (
+            np.array(torso3_ls[0]),
+            torso3_ls[1],
         )
         if not return_matrix:
             return {
@@ -248,6 +261,15 @@ class R1Kinematics:
             T_right_eef[:3, :3] = right_eef_rotation_matrix
             T_right_eef[:3, 3] = right_eef_position
 
+            torso3_rotation_matrix = np.array(
+                pb.getMatrixFromQuaternion(
+                    torso3_quaternion, physicsClientId=self._pb_client_id
+                )
+            ).reshape(3, 3)
+            T_torso3 = np.eye(4)
+            T_torso3[:3, :3] = torso3_rotation_matrix
+            T_torso3[:3, 3] = torso3_position
+
             head_eef_rotation_matrix = np.array(
                 pb.getMatrixFromQuaternion(
                     head_eef_quaternion, physicsClientId=self._pb_client_id
@@ -263,7 +285,9 @@ class R1Kinematics:
                 "head_camera": T_head,
                 "left_eef": T_left_eef,
                 "right_eef": T_right_eef,
+                "torso3_ls":T_torso3,
                 "head": T_head_eef,
+
             }
 
     @property
