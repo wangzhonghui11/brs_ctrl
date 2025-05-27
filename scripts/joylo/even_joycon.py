@@ -21,25 +21,25 @@ class Button(Enum):
     A = auto();
     B = auto();
     X = auto();
-    Y = auto()
+    Y = auto();
     R = auto();
     ZR = auto();
     PLUS = auto();
-    HOME = auto()
+    HOME = auto();
     SR = auto();
     SL = auto();
-    RIGHT_STICK = auto()
+    RIGHT_STICK = auto();
 
     # 左JoyCon按键
     UP = auto();
     DOWN = auto();
     LEFT = auto();
-    RIGHT = auto()
+    RIGHT = auto();
     L = auto();
     ZL = auto();
     MINUS = auto();
-    CAPTURE = auto()
-    LEFT_STICK = auto()
+    CAPTURE = auto();
+    LEFT_STICK = auto();
 
 
 @dataclass
