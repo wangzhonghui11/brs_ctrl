@@ -422,10 +422,10 @@
   </link>
   <joint
     name="torso_joint1"
-    type="revolute">
+    type="fixed">
     <origin
       xyz="-0.032845 0 0.301"
-      rpy="-1.5708 0 0" />
+      rpy="-1.5708 0.781000018119812 0" />
     <parent
       link="base_link" />
     <child
@@ -480,10 +480,10 @@
   </link>
   <joint
     name="torso_joint2"
-    type="revolute">
+    type="fixed">
     <origin
       xyz="0 -0.4 0"
-      rpy="0 0 0" />
+      rpy="0 0 -1.7359000444412231" />
     <parent
       link="torso_link1" />
     <child
@@ -538,10 +538,10 @@
   </link>
   <joint
     name="torso_joint3"
-    type="revolute">
+    type="fixed">
     <origin
       xyz="0 -0.3 0"
-      rpy="0 0 0" />
+      rpy="0 0 0.955" />
     <parent
       link="torso_link2" />
     <child
@@ -596,7 +596,7 @@
   </link>
   <joint
     name="torso_joint4"
-    type="revolute">
+    type="fixed">
     <origin
       xyz="0 -0.12474 0"
       rpy="1.5708 0 0" />
